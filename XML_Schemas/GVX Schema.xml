@@ -1,0 +1,918 @@
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" vc:minVersion="1.1">
+    <!-- 
+ *************************************************************************************************************************************************
+                Schema for GNSS Vector Exchange (GVX) File Format, Version 1.0
+*********************************************************************************************************************************************************
+
+
+GVX aims to provide a standard format for exchanging GNSS vectors derived from varying GNSS survey methods and manufacturer hardware. The file format  
+includes all of the necessary data of a GNSS vector for inclusion in a survey network for least squares adjustment, as well as crucial metadata which 
+describes the source of the vector. The format is meant for any type of GNSS vector, whether it was derived in real-time or from baseline post-processing. 
+Information about the initial and terminal points of each vector are also stored in the GVX file.
+
+ -->
+    <!-- 
+ TYPE DECLARATIONS 
+   
+   
+   "Date" type, format as YYYY-MM-DD  
+   
+   "dateTime" type, format as YYYY-MM-DDThh:mm:ss.ss in GPS Time only.
+   
+ -->
+    <xs:simpleType name="CODEtype">
+        <xs:annotation>
+            <xs:documentation>A code assigned to any element. Each code shall contain only 0-9a-zA-z, space ( ),underscore (_), and colon (:) characters. For example: EPSG:6319</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([0-9a-zA-Z:_ ])*"/>
+            <xs:minLength value="1"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="EMAILtype">
+        <xs:annotation>
+            <xs:documentation>A string with a pattern restricted to a valid email address.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IDtype">
+        <xs:annotation>
+            <xs:documentation>An identifier assigned to any element. Each identifier must be unique throughout the file and shall only contain 0-9a-zA-z, stop (.) and underscore (_) characters. Example: NAD83_2011_2010.00. It must have at least one character.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([0-9a-zA-Z._])*"/>
+            <xs:minLength value="1"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="LATITUDEtype">
+        <xs:annotation>
+            <xs:documentation>A double value for latitude, restricted to negative 90 to positive 90 degrees.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="-90.0"/>
+            <xs:maxInclusive value="90.0"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="LONGITUDEtype">
+        <xs:annotation>
+            <xs:documentation>A double value for longitude. Values are restricted to negative 360 degrees to positive 360 degrees. Negative longitudes indicate a position west of the prime meridian, and positive longitudes indicate east of the prime meridian</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="-360.0"/>
+            <xs:maxInclusive value="360.0"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <!--         
+   
+   
+  -->
+    <!--  ELEMENT DECLARATIONS   -->
+    <!--   SOURCE_DATA element   -->
+    <xs:element name="SOURCE_DATA">
+        <xs:annotation>
+            <xs:documentation>Information on the original survey data file containing the points and vectors. Only one SOURCE_DATA record allowed per file.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="xs:string" name="NAME">
+                    <xs:annotation>
+                        <xs:documentation>Original data file name, such as the survey job file name or project file name. Typically, this is the name of the file in the data collector or for the project on the computer.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:dateTime" name="CREATED_DATE">
+                    <xs:annotation>
+                        <xs:documentation>Date and time when the original data file was created.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="APPLICATION">
+                    <xs:annotation>
+                        <xs:documentation>Information on which application was used to record the data.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:string" name="NAME">
+                                <xs:annotation>
+                                    <xs:documentation>Name of the application software that was used to record the data. Examples are Trimble Access, Leica Captivate LandXML Export, or Magnet Field.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:string" name="VERSION">
+                                <xs:annotation>
+                                    <xs:documentation>Version value.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:string" name="MANUFACTURER" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Name of the manufacturer of the APPLICATION.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:anyURI" name="MANUFACTURER_URL" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Website address of the MANUFACTURER.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="CONVERTED_BY">
+                    <xs:annotation>
+                        <xs:documentation>Information on which software was used to convert the original data file into GVX format. If the APPLICATION is capable of directly outputting a GVX file without conversion, then provide its NAME, VERSION, and URL as the converter software.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:string" name="SOFTWARE_NAME">
+                                <xs:annotation>
+                                    <xs:documentation>Name of the software used to convert the original data file into GVX format.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:string" name="VERSION">
+                                <xs:annotation>
+                                    <xs:documentation>Version value.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:anyURI" name="SOFTWARE_URL" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Website address of the conversion software.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:dateTime" name="CONVERTED_DATE">
+                                <xs:annotation>
+                                    <xs:documentation>Date and time the original data file was converted to GVX format.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <!--   PROJECT_INFORMATION element   -->
+    <xs:element name="PROJECT_INFORMATION">
+        <xs:annotation>
+            <xs:documentation>Information on the surveying project, points of contact, and start and end date of the survey. Only one PROJECT_INFORMATION record is allowed per file.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="xs:string" name="TITLE">
+                    <xs:annotation>
+                        <xs:documentation>Name or title for the survey project.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="EMAILtype" name="EMAIL_ADDRESS" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Email address of the point of contact.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:string" name="PARTY_CHIEF">
+                    <xs:annotation>
+                        <xs:documentation>Name of the party chief of the survey project.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:string" name="AGENCY">
+                    <xs:annotation>
+                        <xs:documentation>Name of the agency or company.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:dateTime" name="START_DATE">
+                    <xs:annotation>
+                        <xs:documentation>Date of the earliest vector in the file</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:dateTime" name="END_DATE">
+                    <xs:annotation>
+                        <xs:documentation>Date of the oldest vector in the file</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:string" name="REMARK" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Any notes, if needed.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <!--   REFERENCE_SYSTEM element   -->
+    <xs:element name="REFERENCE_SYSTEM">
+        <xs:annotation>
+            <xs:documentation>Defines the units and 3-D reference frame(s) utilized for all of the points and orbits utilized during processing in the GVX file. A file may contain multiple REFERENCE_SYSTEM records if points or orbits in the file are in more than one system.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="IDtype" name="ID">
+                    <xs:annotation>
+                        <xs:documentation>A unique identifier for the 3-D reference frame. The value shall be set to equal the ID for a geodetic datum in the International Organization of Standardization (ISO) Geodetic Register (see https://geodetic.isotc211.org/ for full details). An example is to use "126" for NAD 83(2011) or "724" for IGb14</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="CODEtype" name="CODE" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Code for the element, if needed.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:string" name="NAME">
+                    <xs:annotation>
+                        <xs:documentation>Name of the reference system, meant to aid a human reading the file. Example is “NAD 83(2011)” or “IGS14”.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="LINEAR_UNIT">
+                    <xs:annotation>
+                        <xs:documentation>Defines which linear units are used for all distances, heights, Cartesian coordinates, and lengths in the file.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element name="NAME">
+                                <xs:annotation>
+                                    <xs:documentation>Name of the linear units; for a valid GVX file, this string is restricted to meters.</xs:documentation>
+                                </xs:annotation>
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:string">
+                                        <xs:enumeration value="meters"/>
+                                        <xs:enumeration value="metres"/>
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:element>
+                            <xs:element type="xs:unsignedInt" name="SIGNIFICANT_DIGITS" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Number of significant digits.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:double" name="CONVERSION_FACTOR" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Conversion factor from the units in the original data file to required units in the GVX file (if a conversion was necessary).</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ANGULAR_UNIT">
+                    <xs:annotation>
+                        <xs:documentation>Defines the angular units for all angles, latitudes, and longitudes in the file.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element name="NAME">
+                                <xs:annotation>
+                                    <xs:documentation>Name the angular units; for a valid GVX file, this string is restricted to decimal degrees.</xs:documentation>
+                                </xs:annotation>
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:string">
+                                        <xs:enumeration value="decimal degrees"/>
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:element>
+                            <xs:element type="xs:unsignedInt" name="SIGNIFICANT_DIGITS" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Number of significant digits.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:double" name="CONVERSION_FACTOR" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Conversion factor from the units in the original data file to required units in the GVX file (if a conversion was necessary).</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element type="xs:string" name="REMARK" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Any notes, if needed.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <!--   EQUIPMENT element   -->
+    <xs:element name="EQUIPMENT">
+        <xs:annotation>
+            <xs:documentation>Defines pair(s) (antenna and receiver) of GNSS equipment utilized during the GNSS survey. A valid GVX file must contain a minimum of two EQUIPMENT records (one record for the initial and terminal point of a GNSS vector).</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="IDtype" name="ID">
+                    <xs:annotation>
+                        <xs:documentation>A unique identifier for the element.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="RECEIVER">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:string" name="TYPE">
+                                <xs:annotation>
+                                    <xs:documentation>Name of the GNSS receiver. Recommend using official IGS names, if they exist, or following the IGS receiver naming style if they do not, for all GNSS receivers. See ftp://igs.org/pub/station/general/rcvr_ant.tab for details on IGS naming conventions.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:string" name="SERIAL_NUMBER">
+                                <xs:annotation>
+                                    <xs:documentation>Serial number.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:string" name="FIRMWARE_VERSION">
+                                <xs:annotation>
+                                    <xs:documentation>Firmware version utilized by the receiver.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ANTENNA">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:string" name="TYPE">
+                                <xs:annotation>
+                                    <xs:documentation>Official name of the GNSS antenna. Recommend using names accepted by NGS under its antenna calibration program, which include all official IGS antenna names. For details on IGS antenna names, see ftp://igs.org/pub/station/general/rcvr_ant.tab. For names from the NGS antenna calibration program, see https://www.ngs.noaa.gov/ANTCAL/. If the antenna is not on the NGS or IGS calibration lists, then recommend following IGS naming styles.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element name="CALIBRATION_TYPE" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Type of antenna phase center calibration model under use. Values are restricted to either “Absolute” or “Relative” models.</xs:documentation>
+                                </xs:annotation>
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:string">
+                                        <xs:enumeration value="Absolute"/>
+                                        <xs:enumeration value="Relative"/>
+                                        <xs:enumeration value="Unknown"/>
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:element>
+                            <xs:element type="xs:string" name="CALIBRATION_SOURCE" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Source of the antenna phase center calibration model under use. Examples include “IGS”, “NGS”, “Trimble”, “Leica”, “Geo++”, etc.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:string" name="SERIAL_NUMBER">
+                                <xs:annotation>
+                                    <xs:documentation>Serial number. For an integrated antenna plus receiver, the SERIAL_NUMBER for the ANTENNA and RECEIVER should be identical.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <!--   SURVEY_SETUP ELEMENT   -->
+    <xs:element name="SURVEY_SETUP">
+        <xs:annotation>
+            <xs:documentation>Information on how the GNSS vectors were collected or derived. A GVX file may contain multiple SURVEY_SETUP records if varying methods of data collection were used or if the equipment OPERATOR changed during the course of the survey.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="IDtype" name="ID">
+                    <xs:annotation>
+                        <xs:documentation>A unique identifier for the element.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="SOLUTION_TYPE">
+                    <xs:annotation>
+                        <xs:documentation>Method for how the GNSS vector was derived. Only the following strings are allowed: (1) “Single-baseRTK” for a vector from a real-time kinematic (RTK) survey using only a single base station; (2) “NetworkRTK” for a vector from an RTK survey using full network correctors from a real-time network; (3) “Post-processed” for a vector from baseline post-processing.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="Single-baseRTK"/>
+                            <xs:enumeration value="NetworkRTK"/>
+                            <xs:enumeration value="Post-processed"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
+                <xs:element type="xs:string" name="OPERATOR">
+                    <xs:annotation>
+                        <xs:documentation>Name of the person operating the RTK rover receiver or running the post-processing software.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="PROCESSING_SOFTWARE">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:string" name="NAME">
+                                <xs:annotation>
+                                    <xs:documentation>General or simple name of the baseline processing software. An example is “PAGES” or “TBC”.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:string" name="VERSION">
+                                <xs:annotation>
+                                    <xs:documentation>Detailed name or version number of the baseline processing software. An example is “PAGE5 V1603.24”.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:anyURI" name="SOFTWARE_URL" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Website for the software.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element type="xs:string" name="CORRECTOR_FORMAT" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>The format of the corrector, if the vector resulted from an RTK survey. Examples are “RTCM v2”, “RTCM v3”, “CMR/CMR+”.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="NETWORKRTK" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Information on the real-time network (RTN), required if one was used to derive the vector (whether using a single-base station in the RTN or using the full network corrector from multiple base stations in the RTN). If an RTN was not used for the vector, then it is not required.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:string" name="NAME" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Name of the real-time network. Example is "Oregon Real-time GNSS Network".</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:string" name="MOUNT_POINT">
+                                <xs:annotation>
+                                    <xs:documentation>Name of the mount point under use. RTN providers will assign a “mount point” or name for its unique settings for providing corrections, and a user will connect a rover to this mount point. An example is “VRS_RTCM3” which likely indicates the RTN is providing VRS solutions with correctors broadcast in RTCM version 3 format. </xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element name="TYPE">
+                                <xs:annotation>
+                                    <xs:documentation>Method of the network corrector, if SOLUTION_TYPE is "NetworkRTK". Values are restricted to “VRS”, “MAC”, “MAX”, “i-MAX”, “FKP”, “RTX”, or “Other”.</xs:documentation>
+                                </xs:annotation>
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:string">
+                                        <xs:enumeration value="VRS"/>
+                                        <xs:enumeration value="MAC"/>
+                                        <xs:enumeration value="MAX"/>
+                                        <xs:enumeration value="i-MAX"/>
+                                        <xs:enumeration value="FKP"/>
+                                        <xs:enumeration value="RTX"/>
+                                        <xs:enumeration value="Other"/>
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:element>
+                            <xs:element type="xs:anyURI" name="IP_ADDRESS">
+                                <xs:annotation>
+                                    <xs:documentation>IP address.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:unsignedInt" name="IP_PORT">
+                                <xs:annotation>
+                                    <xs:documentation>IP port.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element type="xs:string" name="REMARK" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Any notes, if needed.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <!--   POINT ELEMENT   -->
+    <xs:element name="POINT">
+        <xs:annotation>
+            <xs:documentation>Data for each set of coordinates (i.e., latitude, longitude, and ellipsoid height) for any point in the GVX file. A file will contain multiple POINT records.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="IDtype" name="ID">
+                    <xs:annotation>
+                        <xs:documentation>A unique identifier for the element.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:string" name="NAME">
+                    <xs:annotation>
+                        <xs:documentation>Name assigned by the surveyor for the coordinates of the point. This is also often called the “point name”, and it is typically entered by a surveyor in a data collector or in computer software.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="CODEtype" name="CODE" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Code for the element, if needed.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="IDtype" name="EQUIPMENT_ID">
+                    <xs:annotation>
+                        <xs:documentation>For referencing the EQUIPMENT that was utilized to derive or key-in the coordinates of the point.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="xs:double" name="ARP_HEIGHT">
+                    <xs:annotation>
+                        <xs:documentation>Vertical height from the observed mark to the antenna reference point (ARP) of the antenna.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="POINT_TYPE">
+                    <xs:annotation>
+                        <xs:documentation>Describes how the coordinates of the point were derived. Restricted values are: (1) “Keyed-in” for coordinates that were keyed in or entered to the file; (2) “Code” for coordinates that were derived from only the GNSS pseudorange codes; (3) “Float” for coordinates that were derived from GNSS phase angles without integer ambiguity fixing; (4) “Fixed” for coordinates that were derived with GNSS phase angles with fixed integer ambiguities; (5) “PartialFixed” for coordinates that were derived with GNSS phase angles with partially-fixed integer ambiguities; (6) “Adjusted” for coordinates derived in the office from a least squares adjustment of a survey network; (7) “PPP Solution” for coordinates derived from precise point positioning.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="Keyed-in"/>
+                            <xs:enumeration value="Code"/>
+                            <xs:enumeration value="Float"/>
+                            <xs:enumeration value="Fixed"/>
+                            <xs:enumeration value="PartialFixed"/>
+                            <xs:enumeration value="Adjusted"/>
+                            <xs:enumeration value="PPP Solution"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
+                <xs:element name="NETWORK_LOCATION" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Describes if the coordinates were derived inside or outside the footprint of the real-time network, if used. Restricted values are “Inside”, “Outside”, or “Unknown”.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="Inside"/>
+                            <xs:enumeration value="Outside"/>
+                            <xs:enumeration value="Unknown"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
+                <xs:element type="xs:boolean" name="TILT_COMPENSATOR" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>Allows specifying a value of “1” (TRUE) if the coordinates were derived with the EQUIPMENT and a tilt compensator or “0” (FALSE) if a tilt compensator was not used. </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="COORDINATES">
+                    <xs:annotation>
+                        <xs:documentation>Coordinates for the POINT.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element ref="REFERENCE_SYSTEM_ID"/>
+                            <xs:element ref="EPOCH"/>
+                            <xs:element ref="GEODETIC_COORDINATES"/>
+                            <xs:element ref="GEOCENTRIC_COORDINATES" minOccurs="0"/>
+                            <xs:element ref="CORRELATION_MATRIX_LOCAL" minOccurs="0"/>
+                            <xs:element ref="CORRELATION_MATRIX" minOccurs="0"/>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <xs:element type="IDtype" name="REFERENCE_SYSTEM_ID">
+        <xs:annotation>
+            <xs:documentation>For referencing the REFERENCE_SYSTEM record of the coordinates of the POINT.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:element type="xs:double" name="EPOCH">
+        <xs:annotation>
+            <xs:documentation>Epoch of the coordinates (in decimal years; recommended to at least 4 digits right of the decimal point).</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:element name="GEODETIC_COORDINATES">
+        <xs:annotation>
+            <xs:documentation>A triplet of latitude, longitude, and ellipsoid height coordinates for the POINT. The LATITUDE and LONGITUDE values must be in decimal degrees with a minimum of ten digits right of the decimal point. The ELLIPSOIDAL_HEIGHT must be in meters with four digits right of the decimal point.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="LATITUDEtype" name="LATITUDE"/>
+                <xs:element type="LONGITUDEtype" name="LONGITUDE"/>
+                <xs:element type="xs:double" name="ELLIPSOIDAL_HEIGHT"/>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GEOCENTRIC_COORDINATES">
+        <xs:annotation>
+            <xs:documentation>A triplet of Earth-Centered, Earth-Fixed (ECEF) Cartesian coordinates for the stated axes. Values must be in meters with four digits right of the decimal point.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="xs:double" name="X"/>
+                <xs:element type="xs:double" name="Y"/>
+                <xs:element type="xs:double" name="Z"/>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="CORRELATION_MATRIX_LOCAL">
+        <xs:annotation>
+            <xs:documentation>Standard deviation and correlation coefficient estimates in a local geodetic horizon. Standard deviation values must be provided to a minimum of four digits right of the decimal point, and correlation values must be provided to a minimum of six digits right of the decimal point. </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="xs:double" name="SDN"/>
+                <xs:element type="xs:double" name="SDE"/>
+                <xs:element type="xs:double" name="SDU"/>
+                <xs:element type="xs:double" name="PNE"/>
+                <xs:element type="xs:double" name="PNU"/>
+                <xs:element type="xs:double" name="PEU"/>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="CORRELATION_MATRIX">
+        <xs:annotation>
+            <xs:documentation>Standard deviation and correlation coefficient estimates in the Cartesian axes and REFERENCE_SYSTEM. Standard deviation values must be provided to a minimum of four digits right of the decimal point, and correlation values must be provided to a minimum of six digits right of the decimal point. </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="xs:double" name="SDX"/>
+                <xs:element type="xs:double" name="SDY"/>
+                <xs:element type="xs:double" name="SDZ"/>
+                <xs:element type="xs:double" name="PXY"/>
+                <xs:element type="xs:double" name="PXZ"/>
+                <xs:element type="xs:double" name="PYZ"/>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <!--   GNSS_VECTOR ELEMENT  -->
+    <xs:element name="GNSS_VECTOR">
+        <xs:annotation>
+            <xs:documentation>Data for each GNSS vector in the GVX file. A file may contain multiple GNSS_VECTOR records.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="IDtype" name="ID">
+                    <xs:annotation>
+                        <xs:documentation>A unique identifier for the element.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="IDtype" name="INITIAL_POINT_ID">
+                    <xs:annotation>
+                        <xs:documentation>Identifier for referencing the POINT record for the initial or starting point of the vector.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="IDtype" name="TERMINAL_POINT_ID">
+                    <xs:annotation>
+                        <xs:documentation>Identifier for referencing the POINT record for the terminal or ending point of the vector.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element type="IDtype" name="SURVEY_SETUP_ID">
+                    <xs:annotation>
+                        <xs:documentation>Identifier for referencing the SURVEY_SETUP record, providing information on how the vector was derived.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="OBSERVATION_TIME">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:dateTime" name="START">
+                                <xs:annotation>
+                                    <xs:documentation>Beginning time of the observation. Must be in GPS time.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:dateTime" name="END">
+                                <xs:annotation>
+                                    <xs:documentation>Ending time of the observation. Must be in GPS time.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:double" name="UTC_OFFSET" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>The offset from UTC time to the local time of the observation. Local time equals UTC time plus the UTC_OFFSET.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:integer" name="LEAP_SECONDS" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>The number of leap seconds between GPS time and UTC time. GPS time equals UTC time plus the LEAP_SECONDS.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="QUALITY_CONTROL">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:integer" name="EPOCHS_USED" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>The number of epochs used to compute the vector.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element name="MASK">
+                                <xs:complexType>
+                                    <xs:all>
+                                        <xs:element type="xs:double" name="ELEVATION" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>The setting in the GNSS equipment for the minimum acceptable elevation angle (in decimal degrees) prior to masking satellite observables.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element type="xs:double" name="PDOP_MASK" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>The setting for the maximum acceptable position dilution of precision (PDOP) prior to masking satellite observables.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                    </xs:all>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element type="xs:double" name="RMS" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Root-mean-square error of the baseline solution, to a minimum of three significant figures.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element name="DILUTION_PRECISION" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Dilution of precision values computed for the GNSS vector.</xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:all>
+                                        <xs:element type="xs:double" name="GDOP" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>Geometric dilution of precision.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element type="xs:double" name="HDOP" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>Horizontal dilution of precision.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element type="xs:double" name="PDOP" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>Position dilution of precision.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element type="xs:double" name="TDOP" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>Time dilution of precision.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element type="xs:double" name="VDOP" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>Vertical dilution of precision.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                    </xs:all>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="SATELLITE_USED" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Counts both the total number of satellite vehicles used to derive the GNSS vector as well as a count of the subtotal of vehicles from each GNSS.</xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:all>
+                                        <xs:element type="xs:integer" name="TOTAL"/>
+                                        <xs:element type="xs:integer" name="GPS"/>
+                                        <xs:element type="xs:integer" name="GLONASS"/>
+                                        <xs:element type="xs:integer" name="GALILEO"/>
+                                        <xs:element type="xs:integer" name="QZSS"/>
+                                        <xs:element type="xs:integer" name="BEIDOU"/>
+                                    </xs:all>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="ORBIT">
+                                <xs:annotation>
+                                    <xs:documentation>Information on the type of orbits used during baseline processing.</xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:all>
+                                        <xs:element name="TYPE">
+                                            <xs:annotation>
+                                                <xs:documentation>Name of which orbits were used when deriving the GNSS vector. Restricted values are “Final”, “Rapid”, “Ultra-rapid observed half”, “Ultra-rapid predicted half”, and “Broadcast”.</xs:documentation>
+                                            </xs:annotation>
+                                            <xs:simpleType>
+                                                <xs:restriction base="xs:string">
+                                                    <xs:enumeration value="Broadcast"/>
+                                                    <xs:enumeration value="Ultra-rapid predicted half"/>
+                                                    <xs:enumeration value="Ultra-rapid observed half"/>
+                                                    <xs:enumeration value="Rapid"/>
+                                                    <xs:enumeration value="Final"/>
+                                                </xs:restriction>
+                                            </xs:simpleType>
+                                        </xs:element>
+                                        <xs:element type="xs:string" name="SOURCE">
+                                            <xs:annotation>
+                                                <xs:documentation>Name of the source of the orbits. An example is “IGS” or “Broadcast”.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element type="IDtype" name="REFERENCE_SYSTEM_ID" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>For referencing the REFERENCE_SYSTEM record of the ORBIT.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                        <xs:element type="xs:dateTime" name="DOWNLOAD_DATE" minOccurs="0">
+                                            <xs:annotation>
+                                                <xs:documentation>Date and time the ORBIT was downloaded from its SOURCE.</xs:documentation>
+                                            </xs:annotation>
+                                        </xs:element>
+                                    </xs:all>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element type="xs:integer" name="CORRECTOR_AGE" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>Number of seconds of delay in the real-time corrector, if the vector was derived in real-time.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ECEF_DELTAS">
+                    <xs:annotation>
+                        <xs:documentation>Differential, Earth-Centered, Earth-fixed mark-to-mark vector components in the stated Cartesian axes and REFERENCE_SYSTEM (from the initial point to the terminal point). Values must be provided to a minimum of four digits right of the decimal point.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:double" name="DX"/>
+                            <xs:element type="xs:double" name="DY"/>
+                            <xs:element type="xs:double" name="DZ"/>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="CORRELATION_MATRIX">
+                    <xs:annotation>
+                        <xs:documentation>Standard deviation and correlation coefficient values for the vector components, in the Cartesian axes and reference system of the ORBIT. Standard deviation values must be provide to a minimum of four digits to the right of the decimal point, and correlation values to a minimum of six digits to the right of the decimal point.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:double" name="SDX"/>
+                            <xs:element type="xs:double" name="SDY"/>
+                            <xs:element type="xs:double" name="SDZ"/>
+                            <xs:element type="xs:double" name="PXY"/>
+                            <xs:element type="xs:double" name="PXZ"/>
+                            <xs:element type="xs:double" name="PYZ"/>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+    <!--   SESSION ELEMENT  -->
+    <xs:element name="SESSION">
+        <xs:annotation>
+            <xs:documentation>Record for vectors derived from simultaneous baseline processing. A file may contain multiple sessions, one for each set of vectors processed together with simultaneous observations to common satellites. </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element name="SESSION_TIME">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element type="xs:dateTime" name="START">
+                                <xs:annotation>
+                                    <xs:documentation>Beginning time of the session. Must be in GPS time.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:dateTime" name="END">
+                                <xs:annotation>
+                                    <xs:documentation>Ending time of the session. Must be in GPS time.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:double" name="UTC_OFFSET" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>The offset from UTC time to the local time of the session. Local time equals UTC time plus the UTC_OFFSET.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element type="xs:integer" name="LEAP_SECONDS" minOccurs="0">
+                                <xs:annotation>
+                                    <xs:documentation>The number of leap seconds between GPS time and UTC time. GPS time equals UTC time plus the LEAP_SECONDS.</xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="CROSS_CORRELATION_MATRIX" maxOccurs="1">
+                    <xs:annotation>
+                        <xs:documentation>All correlation coefficients between every pair of vectors in the session, in the Cartesian axes and reference system of the ORBIT. Specified in attribute ORDER, in terms of the Cartesian axes. An example ORDER is “XYZ”. Each SESSION will have one CROSS_CORRELATION_MATRIX element.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="CCM_BLOCK" minOccurs="1" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                        <xs:attribute name="ORDER" type="xs:string"/>
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+            <xs:attribute name="ID" type="IDtype" use="required"/>
+            <xs:attribute name="TOTAL_VECTORS" type="xs:integer" use="required"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="CCM_BLOCK">
+        <xs:annotation>
+            <xs:documentation>A comma delimited list of the 9 correlation coefficients for a 3x3 block of values between a pair of vectors in a session. The pair of subject vectors are referenced by their ID in the attributes, according to row and column of the matrix. For a session containing n TOTAL_VECTORS, there must be [n (n – 1)]/2 blocks to describe a complete cross-correlation matrix. Correlation coefficients are expressed to at least 6 digits to the right of the decimal, in the identified ORDER</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element type="xs:string" name="CORRELATIONS"/>
+            </xs:all>
+            <xs:attribute name="VECTOR_ID_COL" type="IDtype"/>
+            <xs:attribute name="VECTOR_ID_ROW" type="IDtype"/>
+        </xs:complexType>
+    </xs:element>
+    <!--   GVX backbone element  -->
+    <xs:element name="GVX">
+        <xs:annotation>
+            <xs:documentation>The root element of the GNSS vector in GVX format.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="SOURCE_DATA" minOccurs="1" maxOccurs="1"/>
+                <xs:element ref="PROJECT_INFORMATION" minOccurs="1" maxOccurs="1"/>
+                <xs:element ref="REFERENCE_SYSTEM" minOccurs="1" maxOccurs="unbounded"/>
+                <xs:element ref="EQUIPMENT" maxOccurs="unbounded"/>
+                <xs:element ref="SURVEY_SETUP" maxOccurs="unbounded"/>
+                <xs:element ref="POINT" maxOccurs="unbounded"/>
+                <xs:element ref="GNSS_VECTOR" maxOccurs="unbounded"/>
+                <xs:element ref="SESSION" minOccurs="0" maxOccurs="unbounded"/>
+                <xs:element type="xs:string" name="REMARK" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="VERSION" type="xs:string" use="required"/>
+        </xs:complexType>
+        <xs:unique name="uniqueEQUIPMENT">
+            <xs:selector xpath="EQUIPMENT"/>
+            <xs:field xpath="@ID"/>
+        </xs:unique>
+        <xs:unique name="uniqueSURVEY_SETUP">
+            <xs:selector xpath="SURVEY_SETUP"/>
+            <xs:field xpath="@ID"/>
+        </xs:unique>
+        <xs:unique name="uniqueREFERENCE_SYSTEM">
+            <xs:selector xpath="REFERENCE_SYSTEM"/>
+            <xs:field xpath="@ID"/>
+        </xs:unique>
+        <xs:unique name="uniquePOINT">
+            <xs:selector xpath="POINT"/>
+            <xs:field xpath="@ID"/>
+        </xs:unique>
+        <xs:unique name="uniqueGNSS_VECTOR">
+            <xs:selector xpath="GNSS_VECTOR"/>
+            <xs:field xpath="@ID"/>
+        </xs:unique>
+    </xs:element>
+</xs:schema>
